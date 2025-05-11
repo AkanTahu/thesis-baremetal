@@ -1,0 +1,8 @@
+[submodule "python-frs"]
+	path = python-frs
+	url = https://github.com/AkanTahu/python-frs.git
+	branch = win-deploy
+[submodule "rekachain-web"]
+	path = rekachain-web
+	url = https://github.com/rekachain/rekachain-web.git
+	branch = isal-frs-win-deploy
