@@ -5,4 +5,4 @@
 [submodule "rekachain-web"]
 	path = rekachain-web
 	url = https://github.com/rekachain/rekachain-web.git
-	branch = isal-frs-win-deploy
+	branch = isal-frs-baremetal
