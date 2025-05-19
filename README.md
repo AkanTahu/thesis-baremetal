@@ -1,1 +1,84 @@
 git clone --recurse-submodules https://github.com/AkanTahu/thesis-baremetal.git
+
+TAHAPAN DEPLOYMENT BAREMETAL by ~chamzal ~work on wsl
+
+SETUP SSH GITHUB
+
+baremetal
+1. copas first-setup-laravel.sh
+	~ sudo chown tahu:tahu first-setup.sh
+	~ chmod +x first-setup.sh
+	~ chmod +x first-setup-python.sh
+	~ sudo ./ first-setup.sh
+
+2. copas first-setup-python.sh
+	~ sudo chown tahu:tahu first-setup-python.sh
+	~ chmod +x first-setup-python.sh
+	~ sudo ./ first-setup-python.sh
+
+3. ngatur nginx
+	~ sudo nano /etc/nginx/sites-available/thesis-baremetal
+	~ sudo ln -s /etc/nginx/sites-available/thesis-baremetal /etc/nginx/sites-enabled/
+
+server {
+    listen 80;
+    server_name _;
+
+    client_max_body_size 10M;
+
+    root /home/tahu/thesis-baremetal/rekachain-web/public;
+    index index.php index.html;
+
+    # Laravel (PHP-FPM)
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    # Python Application (proxy ke Flask)
+    location /frs/ {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Shared Storage (akses hasil scan, dataset, dsb)
+    location /shared-storage/ {
+        alias /shared-storage/;
+        try_files $uri $uri/ =404;
+        expires 30d;
+        access_log off;
+        add_header Cache-Control "public";
+        autoindex on;
+    }
+
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalive_timeout 65;
+    types_hash_max_size 2048;
+
+    gzip on;
+    gzip_disable "msie6";
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_buffers 16 8k;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+}
+
+
+	~ sudo nginx -t
+	~ sudo systemctl reload nginx
+
+4. run python 
+	~ cd /python-frs
+	~ gunicorn --bind 0.0.0.0:5000 app:app
